@@ -161,7 +161,7 @@ export function SchedulerView() {
   }
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div>

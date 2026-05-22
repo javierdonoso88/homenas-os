@@ -803,7 +803,7 @@ export function ActiveBackupView() {
   const pendingCount = devices?.filter(d => d.status === 'pending').length ?? 0
 
   return (
-    <div className="max-w-6xl space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
