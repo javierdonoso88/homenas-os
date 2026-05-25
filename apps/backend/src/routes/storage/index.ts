@@ -23,6 +23,16 @@ import {
   createPool,
 } from '../../services/disk-manage.service.js'
 
+// Only allow kernel block device names (sda, sdb1, nvme0n1p2, mmcblk0p1, …).
+// Prevents path traversal: /dev/../proc/self/mem etc.
+const DEVICE_NAME_RE = /^[a-z][a-z0-9]+$/
+
+function validateDeviceName(name: string): void {
+  if (!DEVICE_NAME_RE.test(name)) {
+    throw new Error(`Invalid device name: ${JSON.stringify(name)}`)
+  }
+}
+
 export async function storageRoutes(fastify: FastifyInstance) {
   const { requireAuth, requireAdmin } = fastify
 
@@ -151,6 +161,9 @@ export async function storageRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { device: string } }>('/disks/:device/partitions', {
     preHandler: [requireAuth],
   }, async (request, reply) => {
+    try { validateDeviceName(request.params.device) } catch (err) {
+      return reply.status(400).send({ error: 'Bad Request', message: (err as Error).message })
+    }
     const device = `/dev/${request.params.device}`
     try {
       const partitions = await getDiskPartitions(device)
@@ -165,6 +178,9 @@ export async function storageRoutes(fastify: FastifyInstance) {
   fastify.post<{ Params: { device: string } }>('/disks/:device/mount', {
     preHandler: [requireAuth],
   }, async (request, reply) => {
+    try { validateDeviceName(request.params.device) } catch (err) {
+      return reply.status(400).send({ error: 'Bad Request', message: (err as Error).message })
+    }
     const device = `/dev/${request.params.device}`
     const result = MountDiskInputSchema.safeParse(request.body)
     if (!result.success) {
@@ -200,6 +216,9 @@ export async function storageRoutes(fastify: FastifyInstance) {
   fastify.post<{ Params: { device: string } }>('/disks/:device/add-to-pool', {
     preHandler: [requireAuth, requireAdmin],
   }, async (request, reply) => {
+    try { validateDeviceName(request.params.device) } catch (err) {
+      return reply.status(400).send({ error: 'Bad Request', message: (err as Error).message })
+    }
     const device = `/dev/${request.params.device}`
     try {
       const addResult = await addDiskToPool(device)

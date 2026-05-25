@@ -68,6 +68,28 @@ export async function validateComposeFile(composePath: string): Promise<void> {
       throw new Error(`Service "${serviceName}" uses privileged mode — not allowed`)
     }
 
+    // Block dangerous namespace/network modes that allow host escape
+    const networkMode = svc['network_mode']
+    if (typeof networkMode === 'string' && networkMode === 'host') {
+      throw new Error(`Service "${serviceName}" uses network_mode: host — not allowed`)
+    }
+
+    const pidMode = svc['pid']
+    if (typeof pidMode === 'string' && pidMode === 'host') {
+      throw new Error(`Service "${serviceName}" uses pid: host — not allowed`)
+    }
+
+    const usernsMode = svc['userns_mode']
+    if (typeof usernsMode === 'string' && usernsMode === 'host') {
+      throw new Error(`Service "${serviceName}" uses userns_mode: host — not allowed`)
+    }
+
+    // Block dangerous IPC mode
+    const ipcMode = svc['ipc']
+    if (typeof ipcMode === 'string' && ipcMode === 'host') {
+      throw new Error(`Service "${serviceName}" uses ipc: host — not allowed`)
+    }
+
     // Block dangerous capabilities
     const capAdd = svc['cap_add']
     if (Array.isArray(capAdd)) {

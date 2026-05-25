@@ -94,15 +94,18 @@ export function createBackupService(db: Database) {
       switch (job.type) {
         case 'rsync':
           command = 'rsync'
-          args = ['-av', '--progress', ...job.extraArgs, job.source, job.destination]
+          // '--' marks end of options — prevents source/destination being interpreted as flags
+          args = ['-av', '--progress', ...job.extraArgs, '--', job.source, job.destination]
           break
         case 'tar':
           command = 'tar'
-          args = ['-czf', job.destination, ...job.extraArgs, job.source]
+          // '--' marks end of options for GNU tar
+          args = ['-czf', job.destination, ...job.extraArgs, '--', job.source]
           break
         case 'rclone':
           command = 'rclone'
-          args = ['sync', ...job.extraArgs, job.source, job.destination]
+          // '--' marks end of options for rclone
+          args = ['sync', ...job.extraArgs, '--', job.source, job.destination]
           break
         default:
           throw new Error(`Unknown job type: ${job.type as string}`)

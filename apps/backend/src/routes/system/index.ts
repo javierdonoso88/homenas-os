@@ -17,6 +17,7 @@ export async function systemRoutes(fastify: FastifyInstance) {
 
   // POST /api/system/reboot
   fastify.post('/reboot', {
+    config: { rateLimit: { max: 5, timeWindow: '1 hour' } },
     preHandler: [requireAuth, requireAdmin],
   }, async (request, reply) => {
     // Reboot after a short delay so the response can be sent first
@@ -88,6 +89,7 @@ export async function systemRoutes(fastify: FastifyInstance) {
 
   // POST /api/system/ssh/enable
   fastify.post('/ssh/enable', {
+    config: { rateLimit: { max: 10, timeWindow: '1 hour' } },
     preHandler: [requireAuth, requireAdmin],
   }, async (request, reply) => {
     const svc = await sshServiceName()
@@ -99,6 +101,7 @@ export async function systemRoutes(fastify: FastifyInstance) {
 
   // POST /api/system/ssh/disable
   fastify.post('/ssh/disable', {
+    config: { rateLimit: { max: 10, timeWindow: '1 hour' } },
     preHandler: [requireAuth, requireAdmin],
   }, async (request, reply) => {
     const svc = await sshServiceName()

@@ -35,6 +35,15 @@ import {
 } from '../../services/network.service.js'
 import { cloudflareRoutes } from './cloudflare.js'
 
+// WireGuard public keys are base64-encoded Curve25519 keys: exactly 44 chars
+const WG_PUBKEY_RE = /^[A-Za-z0-9+/]{43}=$/
+
+function validateWgPublicKey(key: string): void {
+  if (!WG_PUBKEY_RE.test(key)) {
+    throw new Error('Invalid WireGuard public key format')
+  }
+}
+
 export async function networkRoutes(fastify: FastifyInstance) {
   const { requireAuth, requireAdmin } = fastify
 
@@ -84,6 +93,7 @@ export async function networkRoutes(fastify: FastifyInstance) {
 
   // POST /api/network/wireguard/install
   fastify.post('/wireguard/install', {
+    config: { rateLimit: { max: 3, timeWindow: '1 hour' } },
     preHandler: [requireAuth, requireAdmin],
   }, async (_request, reply) => {
     try {
@@ -177,6 +187,9 @@ export async function networkRoutes(fastify: FastifyInstance) {
     if (!publicKey) {
       return reply.status(400).send({ error: 'Bad Request', message: 'publicKey is required' })
     }
+    try { validateWgPublicKey(publicKey) } catch (err) {
+      return reply.status(400).send({ error: 'Bad Request', message: (err as Error).message })
+    }
 
     try {
       await removeWireguardPeer(publicKey)
@@ -194,6 +207,9 @@ export async function networkRoutes(fastify: FastifyInstance) {
     const { publicKey } = request.params as { publicKey: string }
     if (!publicKey) {
       return reply.status(400).send({ error: 'Bad Request', message: 'publicKey is required' })
+    }
+    try { validateWgPublicKey(publicKey) } catch (err) {
+      return reply.status(400).send({ error: 'Bad Request', message: (err as Error).message })
     }
 
     try {
